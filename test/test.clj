@@ -91,8 +91,7 @@
 ;;    String escaping    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest string-escaping
-  ;(is (:json= {:key "\""})) ; this test runs forever if implementation not correct, but
-                             ; the targeted unit tests below are fine
+  (is (:json= {:key "\""}))
   (is (= (json/encode-to-str "\"") "\"\\\"\"")) ; single double-quote gets escaped
   ; make sure hash-map keys get string-escaped when encoding:
   (is (= (json/encode-to-str {(keyword "/\\\"") 42}) "{\"/\\\\\\\"\":42}"))
