@@ -117,6 +117,7 @@
 	       (recur (conj array value)))))))
 
 (def unescape-map
+     #^{:private true}
      {0x22 \"
       0x5C \\
       0x2F \/
@@ -192,8 +193,6 @@
      :else (decode-number b-reader))))
 
 (defn decode-from-buffered-reader
-  [reader]
-  (let [b-reader (BufferedReader. reader)]
-    ; eat leading whitespace; next char should be start of a value (what we'll return)
-    (eat-whitespace b-reader)
-    (decode-value b-reader)))
+  [#^BufferedReader reader]
+  (eat-whitespace reader) ; eat leading whitespace; next char should
+  (decode-value reader))  ; be start of a value (what we'll return)

@@ -91,6 +91,7 @@
     (.append writer (str pad end-token-indent (end-token coll)))))
 
 (def escape-map
+     #^{:private true}
      {
       \u0008 "\\b"
       \u0009 "\\t"
