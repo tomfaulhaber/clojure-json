@@ -5,7 +5,7 @@
 ;setup JSON encoder-decoder checker test
 (defmethod test-is/assert-expr :json=
   [msg form]
-  `(let [values# (list ~@(rest form))
+  `(let [values# (list ~@(next form))
          json-form# (first values#)
          json-string# (json/encode-to-str json-form#)
          decoded-string# (json/decode-from-str json-string#)
