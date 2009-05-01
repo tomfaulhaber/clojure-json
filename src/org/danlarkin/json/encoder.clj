@@ -125,7 +125,7 @@
 (defmulti encode-custom
   ;Multimethod for encoding classes of objects that
   ;aren't handled by the default encode-helper.
-  (fn [value & _] (class value)))
+  (fn [value & _] (type value)))
 
 (defmethod
   #^{:private true}
