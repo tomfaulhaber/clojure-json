@@ -47,6 +47,10 @@
 (deftest array-of-objects
   (is (:json= [{:foo 1} {:bar 2}])))
 
+(deftest empty-string
+  (is (= (json/decode-from-str "")
+         "")))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;       Numbers         ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -115,7 +119,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;       Indenting       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deftest array-of-objects
+(deftest indenting
   (is (= (json/encode-to-str [{:foo 1},{:bar 2}] :indent 2)
          "[\n  {\n    \"foo\":1\n  },\n  {\n    \"bar\":2\n  }\n]")))
 

@@ -44,9 +44,9 @@
    so I recommend using them.
 
    "
-  [type f]
+  [type-dispatcher f]
   `(let [args# (gensym "args")]
-     (defmethod encoder/encode-custom ~type
+     (defmethod encoder/encode-custom ~type-dispatcher
        [& args#]
        (apply ~f args#))))
 

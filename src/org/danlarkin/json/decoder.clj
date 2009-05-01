@@ -182,7 +182,8 @@
    NOTE: decode-value is not responsible for eating whitespace after the value."
   [#^BufferedReader b-reader]
   (let [_ (.mark b-reader 1)
-	char (char (.read b-reader))]
+        int-char (.read b-reader)
+	char (char int-char)]
     (cond
      (= char \{) (decode-object b-reader)
      (= char \[) (decode-array b-reader)
@@ -190,7 +191,9 @@
      (= char \f) (decode-const b-reader "alse" false)
      (= char \t) (decode-const b-reader "rue" true)
      (= char \n) (decode-const b-reader "ull" nil)
-     :else (decode-number b-reader))))
+     :else (if (= -1 int-char)
+             ""
+             (decode-number b-reader)))))
 
 (defn decode-from-buffered-reader
   [#^BufferedReader reader]
