@@ -11,10 +11,14 @@
          decoded-string# (json/decode-from-str json-string#)
          result# (= json-form# decoded-string#)]
      (if result#
-       (report :pass ~msg '~form `(~'~'= ~json-form# ~decoded-string#))
-       (report :fail ~msg
-               `(~'~'= ~json-form# ~decoded-string#)
-               (list '~'not= json-form# decoded-string#)))
+       (report {:type :pass
+                :message ~msg
+                :expected '~form
+                :actual `(~'~'= ~json-form# ~decoded-string#)})
+       (report {:type :fail
+                :message ~msg
+                :expected `(~'~'= ~json-form# ~decoded-string#)
+                :actual (list '~'not= json-form# decoded-string#)}))
      result#))
 
 
