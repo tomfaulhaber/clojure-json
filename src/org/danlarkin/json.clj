@@ -25,6 +25,7 @@
 
 (ns org.danlarkin.json
   (:import (java.io StringWriter StringReader BufferedReader))
+  (:use (clojure.contrib.pprint))
   (:use (org.danlarkin.json [encoder :as encoder]
                             [decoder :as decoder])))
 
@@ -35,44 +36,35 @@
 
    For example:
 
-   (add-encoder java.util.Date
-             (fn [#^java.util.Date date #^Writer writer
-                  #^String pad #^String current-indent #^String start-token-indent #^Integer indent-size]
-               (.append writer (str start-token-indent \" date \"))))
+   (add-encoder java.util.Date [#^java.util.Date date] (print (str \" date \")))
 
    The type hinting of parameters isn't required but it does seem to speed up performance a lot
    so I recommend using them.
 
    "
-  [type-dispatcher f]
-  `(let [args# (gensym "args")]
-     (defmethod encoder/encode-custom ~type-dispatcher
-       [& args#]
-       (apply ~f args#))))
+  [type-dispatcher [val-arg] & body]
+  `(defmethod encoder/json-dispatch ~type-dispatcher [~val-arg] ~@body))
 
+(defn encode-to-writer
+  "Takes an arbitrarily nested clojure datastructure
+   and a java.io.Writer and returns a JSON-encoded
+   string representation in the java.io.Writer.
+
+   If writer is not specified, it defaults to *out*
+
+   This uses the pretty printer underneath, so various bindings apply,
+   in particular, *print-right-margin*. If you don't want newlines, bind
+   *print-right-margin* to nil."
+  ([value] (encode-to-writer value *out*))
+  ([value #^Writer writer]
+     (write value :stream writer :dispatch encoder/json-dispatch)))
 
 (defn encode-to-str
   "Takes an arbitrarily nested clojure datastructure
    and returns a JSON-encoded string representation
    in a java.lang.String."
-  [value & opts]
-  (let [writer (StringWriter.)
-        opts (apply hash-map opts)
-        indent-size (get opts :indent 0)
-        pad (if (> indent-size 0) \newline "")
-        indent (apply str (replicate indent-size " "))]
-    (str (encoder/encode-helper value writer pad "" indent-size))))
-
-(defn encode-to-writer
-  "Takes an arbitrarily nested clojure datastructure
-   and a java.io.Writer and returns a JSON-encoded
-   string representation in the java.io.Writer."
-  [value #^Writer writer & opts]
-  (let [opts (apply hash-map opts)
-        indent-size (get opts :indent 0)
-        pad (if (> indent-size 0) \newline "")
-        indent (apply str (replicate indent-size " "))]
-    (encoder/encode-helper value writer pad "" indent-size)))
+  [value]
+  (encode-to-writer value nil))
 
 (defn decode-from-reader
   "Takes a java.io.Reader pointing to JSON-encoded data and

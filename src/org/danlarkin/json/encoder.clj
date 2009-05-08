@@ -24,71 +24,8 @@
 ;; THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (ns org.danlarkin.json.encoder
+  (:use clojure.contrib.pprint)
   (:import (java.io Writer StringWriter)))
-
-(def
- #^{:private true}
- separator-symbol        ;separator-symbol will be used for encoding
- (symbol ","))           ;commas in arrays and objects: [a,b,c] and {a:b,c:d}
-
-(declare encode-helper)  ;encode-helper is used before it's defined
-                         ;so we have to pre-define it
-
-(defn- map-entry?
-  "Returns true if x is a MapEntry"
-  [x]
-  (instance? clojure.lang.IMapEntry x))
-
-(defn- get-next-indent
-  "Returns a string of size (+ (count current-indent) indent-size)
-   iff indent-size is not zero."
-  [#^String current-indent #^Integer indent-size]
-  (if (zero? indent-size)
-    ""
-    (str current-indent
-         (apply str (replicate indent-size " ")))))
-
-(defn- start-token
-  [#^clojure.lang.IPersistentCollection coll]
-  (if (map? coll)
-    \{
-    \[))
-
-(defn- end-token
-  [#^clojure.lang.IPersistentCollection coll]
-  (if (map? coll)
-    \}
-    \]))
-
-(defn- encode-symbol
-  "Encodes a symbol into JSON.
-   If that symbol happens to be separator-symbol, though,
-   it will be encoded without surrounding quotation marks."
-  [#^clojure.lang.Symbol value #^Writer writer #^String pad]
-  (if (= value separator-symbol)
-    (.append writer (str separator-symbol pad))
-    (.append writer (str \" value \"))))
-
-(defn- encode-map-entry
-  "Encodes a single key:value pair into JSON."
-  [#^clojure.lang.MapEntry pair #^Writer writer
-   #^String pad #^String current-indent #^Integer indent-size]
-  (let [next-indent (get-next-indent current-indent indent-size)]
-    (encode-helper (key pair) writer pad current-indent indent-size)
-    (.append writer ":")
-    (encode-helper (val pair) writer pad "" indent-size next-indent)))
-
-(defn- encode-coll
-  "Encodes a collection into JSON."
-  [#^clojure.lang.IPersistentCollection coll #^Writer writer
-   #^String pad #^String current-indent #^String start-token-indent #^Integer indent-size]
-  (let [end-token-indent (apply str (drop indent-size current-indent))
-        next-indent (get-next-indent current-indent indent-size)]
-    (.append writer (str start-token-indent (start-token coll) pad))
-    (dorun (map (fn [x]
-                  (encode-helper x writer pad current-indent indent-size))
-                (interpose separator-symbol coll)))
-    (.append writer (str pad end-token-indent (end-token coll)))))
 
 (def escape-map
      #^{:private true}
@@ -122,31 +59,30 @@
   [#^String string]
   (apply str (map escaped-char string)))
 
-(defmulti encode-custom
-  ;Multimethod for encoding classes of objects that
-  ;aren't handled by the default encode-helper.
-  (fn [value & _] (type value)))
+(defmulti json-dispatch
+  "The pretty print dispatch function to format obj in JSON format"
+  {:arglists '[[obj]]}
+  class)
 
-(defmethod
-  #^{:private true}
-  encode-custom :default
-  [value & _]
-  (throw (Exception. (str "Unknown Datastructure: " value))))
+(defmethod json-dispatch java.lang.Boolean [obj]
+  (write-out obj))
+(defmethod json-dispatch nil [obj]
+  (write-out 'null))
+(defmethod json-dispatch java.lang.String [obj]
+  ((formatter-out "\"~a\"") (escaped-str obj)))
+(defmethod json-dispatch clojure.lang.Keyword [obj]
+  ((formatter-out "\"~a\"") (escaped-str (name obj))))
+(defmethod json-dispatch clojure.lang.Symbol [obj]
+  ((formatter-out "\"~a\"") (escaped-str (name obj))))
 
-(defn encode-helper
-  [value #^Writer writer #^IPersistentMap
-   #^String pad #^String current-indent #^Integer indent-size & opts]
-  (let [next-indent (if-let [x (first opts)]
-                      x
-                      (get-next-indent current-indent indent-size))]
-    (cond
-     (= (class value) java.lang.Boolean) (.append writer (str current-indent value))
-     (nil? value) (.append writer (str current-indent 'null))
-     (string? value) (.append writer (str current-indent \" (escaped-str value) \"))
-     (number? value) (.append writer (str current-indent value))
-     (keyword? value) (.append writer
-			       (str current-indent \" (escaped-str (name value)) \"))
-     (symbol? value) (encode-symbol value writer pad)
-     (map-entry? value) (encode-map-entry value writer pad current-indent indent-size)
-     (coll? value) (encode-coll value writer pad next-indent current-indent indent-size)
-     :else (encode-custom value writer pad next-indent current-indent indent-size))))
+(def json-array (formatter-out "~<[~;~@{~w~^, ~:_~}~;]~:>"))
+(def json-map (formatter-out "~<{~;~@{~<~w:~_~w~:>~^, ~_~}~;}~:>"))
+
+(use-method json-dispatch clojure.lang.ISeq json-array)
+(use-method json-dispatch clojure.lang.IPersistentVector json-array)
+(use-method json-dispatch clojure.lang.IPersistentMap json-map)
+
+(defmethod json-dispatch :default [obj]
+  (if (number? obj)
+    (print obj)
+    (throw (Exception. "Undefined  data type")))) ; TODO better error message
