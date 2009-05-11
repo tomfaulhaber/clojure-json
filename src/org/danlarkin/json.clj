@@ -25,8 +25,8 @@
 
 (ns org.danlarkin.json
   (:import (java.io StringWriter StringReader BufferedReader))
-  (:use (clojure.contrib.pprint))
-  (:use (org.danlarkin.json [encoder :as encoder]
+  (:use [clojure.contrib.pprint :only (write)]
+        (org.danlarkin.json [encoder :as encoder]
                             [decoder :as decoder])))
 
 ;(set! *warn-on-reflection* true)
@@ -81,3 +81,4 @@
   "Takes a JSON-encoded string and returns a clojure datastructure."
   [value]
   (decode-from-reader (StringReader. value)))
+
