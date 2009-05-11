@@ -65,7 +65,7 @@
   class)
 
 (defmethod json-dispatch java.lang.Boolean [obj]
-  (write-out obj))
+  (print obj))
 (defmethod json-dispatch nil [obj]
   (write-out 'null))
 (defmethod json-dispatch java.lang.String [obj]
