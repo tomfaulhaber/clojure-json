@@ -67,7 +67,7 @@
 (defmethod json-dispatch java.lang.Boolean [obj]
   (print obj))
 (defmethod json-dispatch nil [obj]
-  (write-out 'null))
+  (print 'null))
 (defmethod json-dispatch java.lang.String [obj]
   ((formatter-out "\"~a\"") (escaped-str obj)))
 (defmethod json-dispatch clojure.lang.Keyword [obj]
