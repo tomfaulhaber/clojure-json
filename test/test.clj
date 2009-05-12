@@ -1,6 +1,7 @@
 (ns clojure-json
   (:require (org.danlarkin [json :as json]))
-  (:use (clojure.contrib [test-is :as test-is])))
+  (:use (clojure.contrib [test-is :as test-is])
+        [clojure.contrib.pprint :only (*print-right-margin*)]))
 
 ;setup JSON encoder-decoder checker test
 (defmethod test-is/assert-expr :json=
@@ -120,8 +121,8 @@
 ;;       Indenting       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest indenting
-  (is (= (json/encode-to-str [{:foo 1},{:bar 2}] :indent 2)
-         "[\n  {\n    \"foo\":1\n  },\n  {\n    \"bar\":2\n  }\n]")))
+  (is (= (binding [*print-right-margin* 0] (json/encode-to-str [{:foo 1},{:bar 2}]))
+         "[{\"foo\":\n  1},\n {\"bar\":\n  2}]")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;      All-in-one       ;;
